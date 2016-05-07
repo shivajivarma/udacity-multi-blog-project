@@ -1,5 +1,53 @@
 {% extends "base.html" %}
 
 {% block content %}
-  {{post.render() | safe}}
+    <div class="row">
+        {{post.render() | safe}}
+    </div>
+
+    <div class="row">
+        <div class="sub-work col-md-12">
+            <form method="post" role="form">
+                <input type="hidden" class="form-control" id="like" name="like" value="update">
+                <button type="submit" class="btn btn-primary">Like {{post.likes}}</button>
+            </form>
+        </div>
+
+        <div class="sub-work col-md-12">
+            <form method="post" role="form" class="comment-form">
+                <div class="form-group">
+                    <label for="comment">Comment:</label>
+                    <input type="text" class="form-control" id="comment" name="comment" value="">
+                </div>
+
+                {% if error %}
+                <div class="alert alert-danger" role="alert">
+                    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                    {{error}}
+                </div>
+                {% endif %}
+
+                <button type="submit" class="btn btn-success">Submit</button>
+            </form>
+        </div>
+
+        <div class="sub-work col-md-12">
+            {% if new %}
+            <blockquote>
+                <p>{{ new }}</p>
+                <footer>{{ post.getUserName() }}</footer>
+            </blockquote>
+            {% endif %}
+
+            {% for c in comments %}
+            <blockquote>
+                <p>{{ c.comment }}</p>
+                <footer>{{ c.getUserName() }}</footer>
+            </blockquote>
+            {% endfor %}
+        </div>
+
+    </div>
 {% endblock %}
+
+

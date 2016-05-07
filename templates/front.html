@@ -1,10 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
+    
+    <div class="row">
+        <div class="sub-work col-md-12">
+            <h2>Udacity Multi Blog</h2>
+        </div>
+    </div>
 
-  {% for p in posts %}
-    {{ p.render() | safe }}
-    <br><br>
-  {% endfor %}
+    {% for p in posts %}
+        <div class="row">
+            {{ p.render() | safe }}
+        </div>
+    {% endfor %}
 
 {% endblock %}

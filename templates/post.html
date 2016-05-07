@@ -1,15 +1,10 @@
-<div class="post">
-  <div class="post-heading">
-    <div class="post-title">
-      {{p.subject}}
-    </div>
+<div class="post col-md-12 wow fadeInRight"
+                 data-wow-duration="1000ms" data-wow-delay="300ms">
+    <h3 class="post-heading">
+        <a href="/blog/{{p.key().id()}}#" class="post-title">{{p.subject}}</a>
+    </h3>
 
-    <div class="post-date">
-      {{p.created.strftime("%b %d, %Y")}}
-    </div>
-  </div>
-
-  <div class="post-content">
-    {{p._render_text | safe}}
-  </div>
+    <small class="post-date">(Posted on {{p.created.strftime("%b %d, %Y")}} by {{p.getUserName()}})</small>
+    
+    <p class="post-content">{{p._render_text | safe}}</p>
 </div>

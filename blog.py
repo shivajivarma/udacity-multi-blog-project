@@ -1,150 +1,144 @@
-import os
 import re
-import random
-import hashlib
 import hmac
-from string import letters
 
 import webapp2
-import jinja2
 
 from google.appengine.ext import db
 
-template_dir = os.path.join(os.path.dirname(__file__), 'templates')
-jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
-                               autoescape = True)
+from user import User
+from post import Post
+from comment import Comment
+import myHelper
 
-secret = 'fart'
+secret = 'secured_secured'
 
-def render_str(template, **params):
-    t = jinja_env.get_template(template)
-    return t.render(params)
-
+"""
+    Creates secure value using secret.
+"""
 def make_secure_val(val):
     return '%s|%s' % (val, hmac.new(secret, val).hexdigest())
 
+"""
+    Verifies secure value against secret.
+"""
 def check_secure_val(secure_val):
     val = secure_val.split('|')[0]
     if secure_val == make_secure_val(val):
         return val
 
+
 class BlogHandler(webapp2.RequestHandler):
+    """
+        This is a BlogHandler Class, inherits webapp2.RequestHandler, and provides helper methods.
+    """
     def write(self, *a, **kw):
+        """
+            This methods write output to client browser.
+        """
         self.response.out.write(*a, **kw)
 
     def render_str(self, template, **params):
+        """
+            This methods renders html using template.
+        """
         params['user'] = self.user
-        return render_str(template, **params)
+        return myHelper.jinja_render_str(template, **params)
 
     def render(self, template, **kw):
         self.write(self.render_str(template, **kw))
 
     def set_secure_cookie(self, name, val):
+        """
+            Sets secure cookie to browser.
+        """
         cookie_val = make_secure_val(val)
         self.response.headers.add_header(
             'Set-Cookie',
             '%s=%s; Path=/' % (name, cookie_val))
 
     def read_secure_cookie(self, name):
+        """
+            Reads secure cookie to browser.
+        """
         cookie_val = self.request.cookies.get(name)
         return cookie_val and check_secure_val(cookie_val)
 
     def login(self, user):
+        """
+            Verifies user existance.
+        """
         self.set_secure_cookie('user_id', str(user.key().id()))
 
     def logout(self):
+        """
+            Removes login information from cookies.
+        """
         self.response.headers.add_header('Set-Cookie', 'user_id=; Path=/')
 
     def initialize(self, *a, **kw):
+        """
+            This methods gets executed for each page and verfies user login status, using oookie information.
+        """
         webapp2.RequestHandler.initialize(self, *a, **kw)
         uid = self.read_secure_cookie('user_id')
         self.user = uid and User.by_id(int(uid))
 
-def render_post(response, post):
-    response.out.write('<b>' + post.subject + '</b><br>')
-    response.out.write(post.content)
-
-class MainPage(BlogHandler):
-  def get(self):
-      self.write('Hello, Udacity!')
-
-
-##### user stuff
-def make_salt(length = 5):
-    return ''.join(random.choice(letters) for x in xrange(length))
-
-def make_pw_hash(name, pw, salt = None):
-    if not salt:
-        salt = make_salt()
-    h = hashlib.sha256(name + pw + salt).hexdigest()
-    return '%s,%s' % (salt, h)
-
-def valid_pw(name, password, h):
-    salt = h.split(',')[0]
-    return h == make_pw_hash(name, password, salt)
-
-def users_key(group = 'default'):
-    return db.Key.from_path('users', group)
-
-class User(db.Model):
-    name = db.StringProperty(required = True)
-    pw_hash = db.StringProperty(required = True)
-    email = db.StringProperty()
-
-    @classmethod
-    def by_id(cls, uid):
-        return User.get_by_id(uid, parent = users_key())
-
-    @classmethod
-    def by_name(cls, name):
-        u = User.all().filter('name =', name).get()
-        return u
-
-    @classmethod
-    def register(cls, name, pw, email = None):
-        pw_hash = make_pw_hash(name, pw)
-        return User(parent = users_key(),
-                    name = name,
-                    pw_hash = pw_hash,
-                    email = email)
-
-    @classmethod
-    def login(cls, name, pw):
-        u = cls.by_name(name)
-        if u and valid_pw(name, pw, u.pw_hash):
-            return u
-
-
-##### blog stuff
 
 def blog_key(name = 'default'):
     return db.Key.from_path('blogs', name)
 
-class Post(db.Model):
-    subject = db.StringProperty(required = True)
-    content = db.TextProperty(required = True)
-    created = db.DateTimeProperty(auto_now_add = True)
-    last_modified = db.DateTimeProperty(auto_now = True)
-
-    def render(self):
-        self._render_text = self.content.replace('\n', '<br>')
-        return render_str("post.html", p = self)
-
 class BlogFront(BlogHandler):
     def get(self):
+        """
+            This renders home page with all posts, sorted by date.
+        """
         posts = greetings = Post.all().order('-created')
         self.render('front.html', posts = posts)
 
 class PostPage(BlogHandler):
     def get(self, post_id):
+        """
+            This renders home post page with content, comments and likes.
+        """
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
 
+        comments = db.GqlQuery("select * from Comment where post_id = "+post_id+"order by created desc")
+        
         if not post:
             self.error(404)
             return
 
-        self.render("permalink.html", post = post)
+        self.render("permalink.html", post = post, comments = comments)
+        
+    def post(self, post_id):
+        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        post = db.get(key)
+        
+        if not post:
+            self.error(404)
+            return
+        
+        """
+            On clicking like, post-like value increases.
+        """        
+        if(self.request.get('like') and self.request.get('like') == "update"):
+            post.likes = post.likes + 1;
+            post.put();
+        
+        """
+            On posting comment, new comment tuple is created and stored, with relationship data of user and post.
+        """
+        if(self.user):
+            if(self.request.get('comment')):
+                c = Comment(parent = blog_key(), user_id = self.user.key().id(), post_id = int(post_id), comment = self.request.get('comment'))
+                c.put()
+        else:
+            self.render("permalink.html", post = post, error = "You need to login before commenting.!!")
+            return
+            
+        comments = db.GqlQuery("select * from Comment where post_id = "+post_id+"order by created desc")
+        self.render("permalink.html", post = post, comments = comments, new = self.request.get('comment'))
 
 class NewPost(BlogHandler):
     def get(self):
@@ -154,6 +148,9 @@ class NewPost(BlogHandler):
             self.redirect("/login")
 
     def post(self):
+        """
+            Creates new post and redirect to new post page.
+        """ 
         if not self.user:
             self.redirect('/blog')
 
@@ -161,26 +158,12 @@ class NewPost(BlogHandler):
         content = self.request.get('content')
 
         if subject and content:
-            p = Post(parent = blog_key(), subject = subject, content = content)
+            p = Post(parent = blog_key(), user_id = self.user.key().id(), subject = subject, content = content, likes = 0)
             p.put()
             self.redirect('/blog/%s' % str(p.key().id()))
         else:
             error = "subject and content, please!"
             self.render("newpost.html", subject=subject, content=content, error=error)
-
-
-###### Unit 2 HW's
-class Rot13(BlogHandler):
-    def get(self):
-        self.render('rot13-form.html')
-
-    def post(self):
-        rot13 = ''
-        text = self.request.get('text')
-        if text:
-            rot13 = text.encode('rot13')
-
-        self.render('rot13-form.html', text = rot13)
 
 
 USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
@@ -200,6 +183,9 @@ class Signup(BlogHandler):
         self.render("signup-form.html")
 
     def post(self):
+        """
+            Sign up validation.
+        """ 
         have_error = False
         self.username = self.request.get('username')
         self.password = self.request.get('password')
@@ -232,10 +218,6 @@ class Signup(BlogHandler):
     def done(self, *a, **kw):
         raise NotImplementedError
 
-class Unit2Signup(Signup):
-    def done(self):
-        self.redirect('/unit2/welcome?username=' + self.username)
-
 class Register(Signup):
     def done(self):
         #make sure the user doesn't already exist
@@ -248,20 +230,23 @@ class Register(Signup):
             u.put()
 
             self.login(u)
-            self.redirect('/blog')
+            self.redirect('/')
 
 class Login(BlogHandler):
     def get(self):
         self.render('login-form.html')
 
     def post(self):
+        """
+            Login validation.
+        """ 
         username = self.request.get('username')
         password = self.request.get('password')
 
         u = User.login(username, password)
         if u:
             self.login(u)
-            self.redirect('/blog')
+            self.redirect('/')
         else:
             msg = 'Invalid login'
             self.render('login-form.html', error = msg)
@@ -269,33 +254,15 @@ class Login(BlogHandler):
 class Logout(BlogHandler):
     def get(self):
         self.logout()
-        self.redirect('/blog')
+        self.redirect('/')
 
-class Unit3Welcome(BlogHandler):
-    def get(self):
-        if self.user:
-            self.render('welcome.html', username = self.user.name)
-        else:
-            self.redirect('/signup')
 
-class Welcome(BlogHandler):
-    def get(self):
-        username = self.request.get('username')
-        if valid_username(username):
-            self.render('welcome.html', username = username)
-        else:
-            self.redirect('/unit2/signup')
-
-app = webapp2.WSGIApplication([('/', MainPage),
-                               ('/unit2/rot13', Rot13),
-                               ('/unit2/signup', Unit2Signup),
-                               ('/unit2/welcome', Welcome),
-                               ('/blog/?', BlogFront),
+app = webapp2.WSGIApplication([
+                               ('/?', BlogFront),
                                ('/blog/([0-9]+)', PostPage),
                                ('/blog/newpost', NewPost),
                                ('/signup', Register),
                                ('/login', Login),
                                ('/logout', Logout),
-                               ('/unit3/welcome', Unit3Welcome),
                                ],
                               debug=True)

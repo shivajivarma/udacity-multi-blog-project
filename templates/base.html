@@ -1,31 +1,81 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <link type="text/css" rel="stylesheet" href="/static/main.css" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>CS 253 Blog</title>
+    <!-- Blog metadata -->
+    <title>Udacity Multi Blog Project</title>
+    <meta name="description"  property="og:description"
+          content="This is multi blog project developed by Shivaji Varma,
+          as part of Udacity Full stack developer course.">
+    <meta name="keywords" content="design, creative, udacity project, portfolio">
+
+    <!-- Framework CSS files -->
+    <link href="/static/frameworks/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css" media="screen">
+    <link href="/static/frameworks/animate/animate.min.css" rel="stylesheet" type="text/css" media="screen">
+    <link href="/static/font/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css" media="screen">
+
+    <!-- Fonts -->
+    <link href="//fonts.googleapis.com/css?family=Lobster" rel="stylesheet" type="text/css" media="screen">
+
+    <!-- Custom CSS -->
+    <link href="/static/css/style.css" rel="stylesheet" type="text/css" media="screen">
 </head>
 
 <body>
-  <a href="/blog" class="main-title">
-    CS 253 Blog
-  </a>
+    <!--Page Content -->
+    <div class="container">
+        <!-- Header section -->
+        <header class="portfolio-header">
+            <div class="row">
+                <div class="logo-section col-md-4 col-sm-4 col-xs-12">
+                    <a href="/"><img class="media-object" src="/static/img/logo.svg"
+                         alt="Logo"></a>
+                </div>
 
-  <div class="login-area">
-    {% if user %}
-      {{user.name}} (<a class="login-link" href="/logout">logout</a>)
-    {% else %}
-      <a class="login-link" href="/login">login</a>
-      |
-      <a class="login-link" href="/signup">signup</a>
-    {% endif %}
-  </div>
+                <div class="title-section col-md-4 col-md-offset-4 col-sm-6 col-sm-offset-2 col-xs-12">
+                    {% if user %}
+                        <h1>{{user.name}}</h1>
+                        <p>
+                            <a class="btn btn-success" href="/blog/newpost">New Post
+                                <span class="glyphicon glyphicon-pencil" aria-hidden="true"/>
+                            </a>
+                            <a class="btn btn-primary" href="/logout">Logout</a>
+                        </p>
+                    {% else %}
+                      <p class="login-options">
+                        <a id="login-control" class="btn btn-primary" href="/login">Login</a>
+                        <a id="signup-control" class="btn btn-danger" href="/signup">Sign Up</a>
+                      </p>
+                    {% endif %}
+                </div>
+            </div>
+        </header>
 
-  <div id="content">
-  {% block content %}
-  {% endblock %}
-  </div>
+        <!--Content section -->
+        <section id="content">
+              {% block content %}
+              {% endblock %}
+        </section>
+
+        <hr>
+
+        <!-- FOOTER -->
+        <footer class="portfolio-footer">
+            <p class="pull-right"><a href="#">Back to top</a></p>
+            <p>made with <i class="fa fa-heart-o" aria-hidden="true"></i> by Shivaji Varma</p>
+        </footer>
+
+    </div>
+
+    <!-- Framework JS files -->
+    <script src="/static/frameworks/jquery.js" type="application/javascript"></script>
+    <script src="/static/frameworks/bootstrap/js/bootstrap.min.js" type="application/javascript"></script>
+    <script src="/static/frameworks/wow/wow.min.js" type="application/javascript"></script>
+
+    <!-- Custom JS files -->
+    <script src="/static/js/main.js"></script>
+
 </body>
-
 </html>
-
