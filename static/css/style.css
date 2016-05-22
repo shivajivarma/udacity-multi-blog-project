@@ -16,6 +16,14 @@ body{
     font-family: Lobster;
 }
 
+.post-content{
+        margin: 15px 0;
+}
+
+#post-delete, .comment-delete{
+    margin-left: 10px;
+}
+
 @media screen and (max-width: 767px) {
     .logo-section .media-object{
         margin: auto;

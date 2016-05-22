@@ -4,20 +4,17 @@
 <div class="row">
 
     <div class="col-md-12">
-        <h2>New post</h2>
+        <h2>Edit comment</h2>
     </div>
 
     <div class="col-md-12">
         <form method="post" role="form">
 
+            <input type="hidden" id="post_id" name="post_id" value="{{post_id}}">
+            
             <div class="form-group">
-                <label for="subject">Subject:</label>
-                <input type="text" class="form-control" id="subject" name="subject" value="{{subject}}">
-            </div>
-           
-            <div class="form-group">
-                <label for="content">Post Content:</label>
-                <textarea class="form-control" id="content" name="content" value="{{content}}" rows="10">{{content}}</textarea>
+                <label for="subject">Comment:</label>
+                <input type="text" class="form-control" id="comment" name="comment" value="{{comment}}">
             </div>
            
             {% if error %}
