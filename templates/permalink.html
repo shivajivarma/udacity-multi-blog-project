@@ -36,15 +36,6 @@
         </div>
 
         <div class="sub-work col-md-12">
-            {% if new %}
-            <blockquote>
-                <a class="comment-delete btn btn-danger pull-right" href="/blog/deletecomment/{{post.key().id()}}/{{new.key().id()}}">Delete</a>
-                <a class="comment-edit btn btn-primary pull-right" href="/blog/editcomment/{{post.key().id()}}/{{new.key().id()}}">Edit</a>
-                <p>{{ new.comment }}</p>
-                <footer>{{ post.getUserName() }}</footer>
-            </blockquote>
-            {% endif %}
-
             {% for c in comments %}
             <blockquote>
                 <a class="comment-delete btn btn-danger pull-right" href="/blog/deletecomment/{{post.key().id()}}/{{c.key().id()}}">Delete</a>

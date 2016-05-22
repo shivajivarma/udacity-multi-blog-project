@@ -137,7 +137,6 @@ class PostPage(BlogHandler):
             On posting comment, new comment tuple is created and stored,
             with relationship data of user and post.
         """
-        newlike = 0
         c = ""
         if(self.user):
             # On clicking like, post-like value increases.
@@ -156,7 +155,6 @@ class PostPage(BlogHandler):
                     l = Like(parent=blog_key(), user_id=self.user.key().id(),
                              post_id=int(post_id))
                     l.put()
-                    newlike = newlike + 1
 
             # On commenting, it creates new comment tuple
             if(self.request.get('comment')):
@@ -175,7 +173,7 @@ class PostPage(BlogHandler):
         likes = db.GqlQuery("select * from Like where post_id="+post_id)
 
         self.render("permalink.html", post=post,
-                    comments=comments, noOfLikes=likes.count() + newlike,
+                    comments=comments, noOfLikes=likes.count(),
                     new=c)
 
 
