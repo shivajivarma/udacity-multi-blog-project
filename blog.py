@@ -311,9 +311,8 @@ class EditComment(BlogHandler):
             c.put()
             self.redirect('/blog/%s' % post_id)
         else:
-            error = "subject and content, please!"
-            self.render("editpost.html", subject=subject,
-                        content=content, error=error)
+            error = "No blank comments, please!"
+            self.render("editcomment.html", error=error)
 
 USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
 
